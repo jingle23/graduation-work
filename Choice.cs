@@ -35,7 +35,9 @@ public class Choice : MonoBehaviour {
 					}
 					else // 클릭한 큐브가 황금큐브가 아닐 경우
 					{
-						Instantiate(m_Effects,transform.position + new Vector3(0,0.4f,0.4f),m_Effects.transform.rotation);
+						Instantiate(m_Effects, rayhit.transform.position, m_Effects.transform.rotation);
+						//Instantiate(m_Effects,transform.position + new Vector3(0,0.3f,0.3f),m_Effects.transform.rotation);
+						//Instantiate(m_Effects,transform.position + new Vector3(0,0.5f,0.5f),m_Effects.transform.rotation);
 						// 스파크 이팩트를 new Vector3() 위치에 생성한다.
 					}
 
