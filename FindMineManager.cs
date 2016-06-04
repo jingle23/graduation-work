@@ -5,9 +5,17 @@ public class FindMineManager : MainRoomPropertyController
 {
     public GameObject BlockPrefab;
 
-    // 메테리얼들 ( 열기전, 연후 비었을때 , 1 , 2, 3, 깃발, 지뢰
-    public Material PlaneMaterial;
-    public Material AfterClickPlaneMaterial;
+	public GameObject Mine_Explosion;
+
+	public GameObject One;
+	public GameObject Two;
+	public GameObject Three;
+	public GameObject Flag;
+	public GameObject Zero;
+
+    public Material PlaneMaterial;	// 뒤집기 전 색깔
+    public Material AfterClickPlaneMaterial;	// 뒤집고 난 후 색깔
+
     public Material OneMaterial;
     public Material TwoMaterial;
     public Material ThreeMaterial;
@@ -15,24 +23,31 @@ public class FindMineManager : MainRoomPropertyController
     public Material MineMaterial;
 
     int[,] MineArray = new int[5, 5];
-    GameObject[,] MineObject = new GameObject[5, 5];
+
+	GameObject[,] MineObject = new GameObject[5, 5];
+	//GameObject[,] MineObject = new GameObject[5, 5];
+
     void Awake()
     {
-        //초기화, 지뢰찾기 생성
         for (int i = 0; i < 5; ++i)
             for (int j = 0; j < 5; ++j)
             {
                 MineArray[i, j] = 0;
                 MineObject[i, j] = Instantiate(BlockPrefab) as GameObject;
+
                 MineObject[i, j].transform.parent = gameObject.transform;
+				MineObject[i, j].transform.rotation = gameObject.transform.rotation;
+
                 MineObject[i, j].transform.name = i.ToString() + "," + j.ToString();
-                MineObject[i, j].transform.localPosition = new Vector3(-3 + i * 1.5f, -3.7f, -3 + j * 1.5f);
+
+                //MineObject[i, j].transform.localPosition = new Vector3(-3 + i * 1.5f, -3.7f, -3 + j * 1.5f);
+				MineObject[i, j].transform.localPosition = new Vector3(-2 + i * 1.0f, -3.8f, -2 + j * 1.0f);
+
             }
     }
     // Use this for initialization
     public override void EnterRoom()
     {
-        // 클릭 이벤트 등록
         StartCoroutine("FindMineGame");
         RayEvent.OnLeftClick += OnLeftClick;
         RayEvent.OnRightClick += OnRightClick;
@@ -43,9 +58,10 @@ public class FindMineManager : MainRoomPropertyController
     public override void Update()
     {
         base.Update();
+
+
     }
 
-    // 클리어했을때
     public override void Clear()
     {
         StopCoroutine("FindMineGame");
@@ -56,7 +72,6 @@ public class FindMineManager : MainRoomPropertyController
        
     }
 
-    // 클릭 이벤트 등록해제
     public override void LeaveRoom()
     {
         RayEvent.OnLeftClick -= OnLeftClick;
@@ -65,7 +80,6 @@ public class FindMineManager : MainRoomPropertyController
         RayEvent.OnHoverEnd -= OnHoverEnd;
     }
 
-    // 해당 위치를 클릭했을때
     void OnLeftClick(GameObject obj)
     {
         if (obj.CompareTag("FindMineBlock"))
@@ -81,7 +95,6 @@ public class FindMineManager : MainRoomPropertyController
         }
     }
 
-    // 우클릭 : 깃발
     void OnRightClick(GameObject obj)
     {
         if (obj.CompareTag("FindMineBlock"))
@@ -91,13 +104,33 @@ public class FindMineManager : MainRoomPropertyController
                 {
                     if (MineObject[i, j].name == obj.name)
                     {
-                        MineObject[i, j].GetComponent<Renderer>().material = FlagMaterial;
+					if(MineArray[i,j] != 3){
+						MineArray[i,j] = 3;
+                        //MineObject[i, j].GetComponent<Renderer>().material = FlagMaterial;
+						string name = MineObject[i,j].name;
+						MineObject[i,j] = Instantiate( Flag,
+					                              	    new Vector3( MineObject[i,j].transform.position.x,
+					            									 MineObject[i,j].transform.position.y + 0.3f,
+					             									 MineObject[i,j].transform.position.z),
+					                              	    Flag.transform.rotation ) as GameObject;
+						MineObject[i,j].name = name;
+					/*
+					MineObject[i,j] = Instantiate( Flag ) as GameObject;
+					MineObject[i,j].transform.rotation = Flag.transform.rotation;
+					MineObject[i,j].transform.localPosition = new Vector3( MineObject[i,j].transform.localPosition.x,
+					                                                      MineObject[i,j].transform.localPosition.y + 0.3f,
+					                                                      MineObject[i,j].transform.localPosition.z);
+					*/
                     }
+					else{
+						Debug.Log("클릭한적이 있는놈임!");
+					}
+					}
+					
                 }
         }
     }
 
-    // 하이라이트
     void OnHover(GameObject obj)
     {
         if (obj.CompareTag("FindMineBlock"))
@@ -106,7 +139,6 @@ public class FindMineManager : MainRoomPropertyController
         }
     }
 
-    // 하이라이트 끄기
     void OnHoverEnd(GameObject obj)
     {
         if (obj.CompareTag("FindMineBlock"))
@@ -124,11 +156,9 @@ public class FindMineManager : MainRoomPropertyController
         }
     }
 
-
-    // 메인 로직
     IEnumerator FindMineGame()
     {
-        Initialize();   // 시작할때 초기화
+        Initialize();
 
         for (int i = 0; i < 3; ++i)
         {
@@ -140,8 +170,7 @@ public class FindMineManager : MainRoomPropertyController
             NotReduplicationRandom(false);  // 처음에 보여줄곳 생성
         }
 
-
-        for (int i = 0; i < 5; ++i) // 처음에 보여줄곳 계산
+        for (int i = 0; i < 5; ++i)
             for (int j = 0; j < 5; ++j)
             {
                 if (MineArray[i, j] == 2)
@@ -151,7 +180,6 @@ public class FindMineManager : MainRoomPropertyController
             }
         return null;
     }
-
 
     void Initialize()
     {
@@ -165,7 +193,6 @@ public class FindMineManager : MainRoomPropertyController
             }
     }
 
-    // 중복되지 않는 랜덤
     void NotReduplicationRandom(bool isMine)
     {
         int randX = Random.Range(0, 5);
@@ -181,21 +208,25 @@ public class FindMineManager : MainRoomPropertyController
             MineArray[randX, randY] = 2;
     }
 
-
     void CalculateMine(int x, int y)
     {
-        switch (MineArray[x, y])    // 현재 클릭한 위치가 지뢰인지 아닌지 검사
+        switch (MineArray[x, y])
         {
-            case 1:                 // 지뢰라면
+            case 1:
                 MineObject[x, y].GetComponent<Renderer>().material = MineMaterial;
                 transform.GetChild(0).localPosition = MineObject[x, y].transform.localPosition;
                 transform.GetChild(0).gameObject.SetActive(true);
-                Invoke("DisableExplosion", 2.0f);
+			// transform.getchild(순서)  오브젝트 하위에 자식 오브젝트를 순서대로 접근할때 사용
+
+				//Invoke("DisableExplosion", 2.0f);
                 // 게임오버 처리
+				
+				Instantiate( Mine_Explosion, MineObject[x,y].transform.position, MineObject[x,y].transform.rotation );
                 break;
-            default:                // 아니라면 계산
+            
+			default:
                 int mine = 0;
-                for (int i = -1; i <= 1; ++i)   // 좌,우,위,아래,대각선 8방향 검사후 지뢰가 몇개 있는지 계산한다.
+                for (int i = -1; i <= 1; ++i)
                 {
                     for (int j = -1; j <= 1; ++j)
                     {
@@ -217,28 +248,46 @@ public class FindMineManager : MainRoomPropertyController
                     }
                 }
 
-
-                switch (mine)   // 지뢰의 갯수에 따라 메테리얼을 바꿔준다
+                switch (mine)
                 {
                     case 0:
-                        MineObject[x, y].GetComponent<Renderer>().material = AfterClickPlaneMaterial;
+						MineObject[x,y] = Instantiate( Zero,
+				                             		    new Vector3( MineObject[x,y].transform.position.x,
+				           							   				MineObject[x,y].transform.position.y + 0.3f,
+				            										MineObject[x,y].transform.position.z),
+				                              		    Quaternion.Euler( new Vector3(-90, 0, 0) ) ) as GameObject;
+						break;
+
+					case 1:
+						MineObject[x,y] = Instantiate( One,
+				                              		    new Vector3( MineObject[x,y].transform.position.x,
+				            										 MineObject[x,y].transform.position.y + 0.3f,
+				            										 MineObject[x,y].transform.position.z),
+				                              		    Quaternion.Euler( new Vector3(-90, 0, 0) ) ) as GameObject;     
                         break;
-                    case 1:
-                        MineObject[x, y].GetComponent<Renderer>().material = OneMaterial;
-                        break;
-                    case 2:
-                        MineObject[x, y].GetComponent<Renderer>().material = TwoMaterial;
-                        break;
+                    
+					case 2:
+						MineObject[x,y] = Instantiate( Two,
+				                              			new Vector3( MineObject[x,y].transform.position.x,
+				            										 MineObject[x,y].transform.position.y + 0.3f,
+				            										 MineObject[x,y].transform.position.z),
+				                              			Quaternion.Euler( new Vector3(-90, 0, 0) ) ) as GameObject;     						
+						break;
+
                     case 3:
-                        MineObject[x, y].GetComponent<Renderer>().material = ThreeMaterial;
+						MineObject[x,y] = Instantiate( Three,
+				                              			new Vector3( MineObject[x,y].transform.position.x,
+				            										 MineObject[x,y].transform.position.y + 0.3f,
+				            										 MineObject[x,y].transform.position.z),
+				                              			Quaternion.Euler( new Vector3(-90, 0, 0) ) ) as GameObject;     
                         break;
                 }
                 break;
         }
-        MineObject[x, y].tag = "Untagged";  // 이미 클릭한 곳은 다시 클릭 안되게 변경
+        MineObject[x, y].tag = "Untagged";
 
         int numofCurrentBeforeBlock = 0;
-        for(int i=0;i<transform.childCount; ++i)    // 현재까지 깐 곳을 계산해서 3개 이하면 지뢰만 남았으므로 클리어처리
+        for(int i=0;i<transform.childCount; ++i)
         {
             if(transform.GetChild(i).CompareTag("FindMineBlock"))
             {
@@ -250,8 +299,8 @@ public class FindMineManager : MainRoomPropertyController
         
     }
 
-    void DisableExplosion()
-    {
-        transform.GetChild(0).gameObject.SetActive(false);
-    }
+    //void DisableExplosion()
+    //{
+    //    transform.GetChild(0).gameObject.SetActive(false);
+    //}
 }
